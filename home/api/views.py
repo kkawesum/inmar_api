@@ -35,17 +35,13 @@ class SkuIndex(APIView):
 class dept_by_loc(APIView):
     def get(self,request,loc_id):
         try:
-            dept = Department.objects.filter(location_id=loc_id)
-            
-            # page_number = request.GET.get('page',1)
-            # paginator = Paginator(loc,2)
-            # serializer = DepartmentSerializer(paginator.page(page_number),many=True)
-            serializer = DepartmentSerializer(dept,many=True)
-            return Response({
-                'data': serializer.data,
-                'message': 'data fetched successfully'
-            },status=status.HTTP_200_OK)
-        
+            location = get_object_or_404(Location, id=loc_id)
+
+            # Get Departments under the given Location
+            departments = Department.objects.filter(location=location)
+            serializer = DepartmentSerializer(departments, many=True)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
                 return Response({
                         'data': {},
@@ -56,22 +52,12 @@ class dept_by_loc(APIView):
 class cat_by_dept_loc(APIView):
     def get(self,request,loc_id,dep_id):
         try:
-            dept = Department.objects.filter(location_id=loc_id)
-            # print(dept)
-            categories = Category.objects.select_related("department").all()  # 1 Query
-            q=[]
-            for category in categories:
-                if (category.department.id==dep_id):
-                    q.append(category) 
-            products = Product.objects.select_related("category", "category__department").all()
-
-            # cat = Category.objects.filter(department_id = dep_id)
-            # print(q)
-            serializer = CategorySerializer(q,many=True)
-            return Response({
-                'data': serializer.data,
-                'message': 'data fetched successfully'
-            },status=status.HTTP_200_OK)
+            location = get_object_or_404(Location, id=loc_id)
+            department = get_object_or_404(Department, id=dep_id, location=location)
+            categories = Category.objects.filter(department=department)
+            serializer = CategorySerializer(categories, many=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
         except Exception as e:
                 return Response({
                         'data': {},
@@ -83,15 +69,20 @@ class cat_by_dept_loc(APIView):
 class Scat_cat_dep_loc(APIView):
      def get(self,request,loc_id,dep_id,cat_id):
         try:
-            loc = Location.objects.filter(id=loc_id)
-            deps = Department.objects.select_related("location").all()
-            c = Category.objects.select_related('department').all()
-            sub_cat = SubCategory.objects.select_related('category')
-            serializer = SubCategorySerializer(sub_cat,many=True)
-            return Response({
-                'data': serializer.data,
-                'message': 'data fetched successfully'
-            },status=status.HTTP_200_OK)
+            location = get_object_or_404(Location, id=loc_id)
+
+        # Validate Department under Location
+            department = get_object_or_404(Department, id=dep_id, location=location)
+
+            # Validate Category under Department
+            category = get_object_or_404(Category, id=cat_id, department=department)
+
+            # Get Subcategories under the given Category
+            subcategories = SubCategory.objects.filter(category=category)
+            serializer = SubCategorySerializer(subcategories, many=True)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
         except Exception as e:
                     return Response({
                             'data': {},
@@ -101,20 +92,17 @@ class Scat_cat_dep_loc(APIView):
 class sub_by_cat_dept_loc(APIView):
     def get(self,request,loc_id,dep_id,cat_id,sub_cat_id):
         try:
-            loc = Location.objects.filter(id=loc_id)
-    #    print('till')
-            deps = Department.objects.select_related("location").all()
-    #    print(deps)
-    #    cats = Category.objects.filter(department_id=dep_id)
-            c = Category.objects.select_related('department').all()
-        
-            sub_cat = SubCategory.objects.select_related('category')
-            sub_cat = sub_cat.filter(id=sub_cat_id)
-            serializer = SubCategorySerializer(sub_cat,many=True)
-            return Response({
-                'data': serializer.data,
-                'message': 'data fetched successfully'
-            },status=status.HTTP_200_OK)
+            location = get_object_or_404(Location, id=loc_id)
+
+            department = get_object_or_404(Department, id=dep_id, location=location)
+
+            category = get_object_or_404(Category, id=cat_id, department=department)
+
+            # Validate SubCategory under Category
+            subcategory = get_object_or_404(SubCategory, id=sub_cat_id, category=category)
+
+            serializer = SubCategorySerializer(subcategory)
+            return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
                     return Response({
                             'data': {},
