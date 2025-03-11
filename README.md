@@ -16,5 +16,5 @@ ___
 Example: def post(self,request,*args):
             ...
 ___
-* All the sample data has not been uploaded to the database,this is just a MVP.
+* All the sample data has not been uploaded to the database,this is just a MVP(Minimum Viable Product).
   
